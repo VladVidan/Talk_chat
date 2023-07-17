@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-
+# проверка связи# проверка связи# проверка связи# проверка связи# проверка связи# проверка связи# проверка связи# проверка связи#
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/talk-auth/', include('rest_framework.urls')),
