@@ -17,12 +17,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include, re_path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-
-from talk_core.views import UserRegistrationAPIView , confirm_account
+from talk_core.views import UserRegistrationAPIView, confirm_account
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/v1/talk-auth/', include('rest_framework.urls')), #  встроенная авторизация , ее надо удалить наверное
     path('api/v1/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/v1/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/v1/register/', UserRegistrationAPIView.as_view(), name='user-registration'),
