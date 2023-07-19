@@ -40,8 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'talk_core.apps.TalkCoreConfig',
     'rest_framework_simplejwt',
-    'djoser',
-    'rest_framework.authtoken'
+    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
@@ -153,7 +152,7 @@ SIMPLE_JWT = {
 
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
-    "USER_ID_FIELD": "id",
+    "USER_ID_FIELD": "email",
     "USER_ID_CLAIM": "user_id",
     "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
 
@@ -179,5 +178,5 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'тут должен быть емейл'
-EMAIL_HOST_PASSWORD = 'тут секретный ключ с гугла '
+EMAIL_HOST_USER = 'talk.team.challenge@gmail.com'
+EMAIL_HOST_PASSWORD = 'yxwhibkhvygczzwc'
