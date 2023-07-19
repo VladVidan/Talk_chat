@@ -18,18 +18,13 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-# urlpatterns = [
-#     path('admin/', admin.site.urls),
-#     path('api/v1/talk-auth/', include('rest_framework.urls')),
-#     path('api/v1/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-#     path('api/v1/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-#     path( 'api/v1/auth/', include('djoser.urls')),
-#     re_path(r'^auth/', include('djoser.urls.authtoken')), #
-# ]
+from talk_core.views import UserRegistrationAPIView , confirm_account
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/v1/talk-auth/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/v1/talk-auth/', include('rest_framework.urls')),
+    path('api/v1/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/v1/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/v1/auth/', include('djoser.urls')),
-    path('api/v1/auth/users/me/', include('djoser.urls')),
+    path('api/v1/register/', UserRegistrationAPIView.as_view(), name='user-registration'),
+    path('confirm/<int:user_id>/', confirm_account, name='confirm-account'),
 ]
