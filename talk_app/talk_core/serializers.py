@@ -19,3 +19,5 @@ class UserRegistrationSerializer(serializers.Serializer):
             is_active=False
         )
         return user
+
+
