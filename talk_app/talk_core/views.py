@@ -4,19 +4,22 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.core.mail import send_mail
-
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.views import TokenObtainPairView
+
+
+class CustomAuthenticationAPIView(TokenObtainPairView):
+    authentication_classes = ()
 
 
 class UserRegistrationAPIView(APIView):
     """Registration class"""
     def post(self, request):
         """"Processing registration form data and creating a new user"""
-        # username = request.data.get('email')
+        username = request.data.get('email')
         email = request.data.get('email')
         password = request.data.get('password')
-        user = User.objects.create_user(username=email, email=email, password=password, is_active=False)
+        user = User.objects.create_user(username=username, email=email, password=password, is_active=False)
 
         """Send an account confirmation email"""
         subject = 'Account Confirmation'
@@ -31,6 +34,7 @@ class UserRegistrationAPIView(APIView):
 
 @api_view(['GET'])
 def confirm_account(request, user_id):
+    """Email confirmation function."""
     _user = get_user_model()
 
     try:
@@ -40,6 +44,7 @@ def confirm_account(request, user_id):
             user.save()
             return Response({"message": "Account successfully confirmed."}, status=status.HTTP_200_OK)
         else:
-            return Response({"message": "The account has already been confirmed previously."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "The account has already been confirmed previously."},
+                            status=status.HTTP_400_BAD_REQUEST)
     except _user.DoesNotExist:
         return Response({"message": "Account not found."}, status=status.HTTP_404_NOT_FOUND)
