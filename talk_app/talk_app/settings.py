@@ -38,7 +38,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'talk_core.apps.TalkCoreConfig',
     'rest_framework_simplejwt',
+<<<<<<< HEAD
     'rest_framework.authtoken'
+=======
+    'rest_framework.authtoken',
+>>>>>>> 169a813498d18dde62a79b781273106edd9d0842
 ]
 
 MIDDLEWARE = [
@@ -145,7 +149,7 @@ SIMPLE_JWT = {
 
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
-    "USER_ID_FIELD": "id",
+    "USER_ID_FIELD": "email",
     "USER_ID_CLAIM": "user_id",
     "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
 
@@ -172,4 +176,8 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'talk.team.challenge@gmail.com'
+<<<<<<< HEAD
 EMAIL_HOST_PASSWORD = 'yxwhibkhvygczzwc'
+=======
+EMAIL_HOST_PASSWORD = 'yxwhibkhvygczzwc'
+>>>>>>> 169a813498d18dde62a79b781273106edd9d0842

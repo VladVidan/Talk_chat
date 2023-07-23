@@ -6,15 +6,23 @@ from rest_framework import status
 from django.core.mail import send_mail
 
 from django.contrib.auth.models import User
+<<<<<<< HEAD
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from talk_core.serializers import EmailLoginSerializer
+=======
+from rest_framework_simplejwt.views import TokenObtainPairView
+>>>>>>> 169a813498d18dde62a79b781273106edd9d0842
 
 
 class UserRegistrationAPIView(APIView):
     """Registration class"""
     def post(self, request):
         """"Processing registration form data and creating a new user"""
+<<<<<<< HEAD
+=======
+        # username = request.data.get('email')
+>>>>>>> 169a813498d18dde62a79b781273106edd9d0842
         email = request.data.get('email')
         password = request.data.get('password')
         user = User.objects.create_user(username=email, email=email, password=password, is_active=False)
@@ -32,17 +40,17 @@ class UserRegistrationAPIView(APIView):
 
 @api_view(['GET'])
 def confirm_account(request, user_id):
-    User = get_user_model()
+    _user = get_user_model()
 
     try:
-        user = User.objects.get(pk=user_id)
+        user = _user.objects.get(pk=user_id)
         if not user.is_active:
             user.is_active = True
             user.save()
             return Response({"message": "Account successfully confirmed."}, status=status.HTTP_200_OK)
         else:
             return Response({"message": "The account has already been confirmed previously."}, status=status.HTTP_400_BAD_REQUEST)
-    except User.DoesNotExist:
+    except _user.DoesNotExist:
         return Response({"message": "Account not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
