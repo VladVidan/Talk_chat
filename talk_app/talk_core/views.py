@@ -5,17 +5,15 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.core.mail import send_mail
 from django.contrib.auth.models import User
-from rest_framework_simplejwt.views import TokenObtainPairView
-
-
-class CustomAuthenticationAPIView(TokenObtainPairView):
-    authentication_classes = ()
+from rest_framework_simplejwt.tokens import RefreshToken
+from .serializers import EmailLoginSerializer
 
 
 class UserRegistrationAPIView(APIView):
     """Registration class"""
     def post(self, request):
         """"Processing registration form data and creating a new user"""
+
         username = request.data.get('email')
         email = request.data.get('email')
         password = request.data.get('password')
@@ -48,3 +46,26 @@ def confirm_account(request, user_id):
                             status=status.HTTP_400_BAD_REQUEST)
     except _user.DoesNotExist:
         return Response({"message": "Account not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class EmailLoginAPIView(APIView):
+    """Custom class for login with email"""
+    def post(self, request):
+        serializer = EmailLoginSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            password = serializer.validated_data['password']
+
+            User = get_user_model()
+            user = User.objects.filter(email=email).first()
+
+            if user and user.check_password(password):
+                refresh = RefreshToken.for_user(user)
+                return Response({
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                })
+            else:
+                return Response({'error': 'The email or password is incorrect. Please try again.'},
+                                status=status.HTTP_401_UNAUTHORIZED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
