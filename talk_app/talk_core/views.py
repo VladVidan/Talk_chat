@@ -1,4 +1,7 @@
 from django.contrib.auth import get_user_model
+from django.shortcuts import redirect
+from django_rest_passwordreset.models import ResetPasswordToken
+
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -7,10 +10,14 @@ from django.core.mail import send_mail
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import EmailLoginSerializer
+from django.db import models
+from django.utils import timezone
+from datetime import timedelta
 
 
 class UserRegistrationAPIView(APIView):
     """Registration class"""
+
     def post(self, request):
         """"Processing registration form data and creating a new user"""
 
@@ -32,24 +39,23 @@ class UserRegistrationAPIView(APIView):
 
 @api_view(['GET'])
 def confirm_account(request, user_id):
-    """Email confirmation function."""
-    _user = get_user_model()
+    User = get_user_model()
 
     try:
-        user = _user.objects.get(pk=user_id)
+        user = User.objects.get(pk=user_id)
         if not user.is_active:
             user.is_active = True
             user.save()
-            return Response({"message": "Account successfully confirmed."}, status=status.HTTP_200_OK)
+
+            return redirect('https://valerka4052.github.io/chat-talk-front/login/')
         else:
             return Response({"message": "The account has already been confirmed previously."},
                             status=status.HTTP_400_BAD_REQUEST)
-    except _user.DoesNotExist:
+    except User.DoesNotExist:
         return Response({"message": "Account not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
 class EmailLoginAPIView(APIView):
-    """Custom class for login with email"""
     def post(self, request):
         serializer = EmailLoginSerializer(data=request.data)
         if serializer.is_valid():
@@ -64,8 +70,58 @@ class EmailLoginAPIView(APIView):
                 return Response({
                     'refresh': str(refresh),
                     'access': str(refresh.access_token),
+                    'email': str(email)
                 })
             else:
-                return Response({'error': 'The email or password is incorrect. Please try again.'},
-                                status=status.HTTP_401_UNAUTHORIZED)
+                return Response({'error': 'Incorrect accounting information'}, status=status.HTTP_401_UNAUTHORIZED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+class PasswordResetAPIView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+
+
+        try:
+            user = get_user_model().objects.get(email=email)
+        except get_user_model().DoesNotExist:
+            return Response({"message": "User with this email does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Create a password reset token for the user
+        reset_token = ResetPasswordToken.objects.create(user=user)
+
+        # You can send the reset token to the user's email using email service here
+        reset_url = f'http://127.0.0.1:8000/api/v1/password_reset/confirm/?token={reset_token.key}'
+        message = f'To reset your password, follow this link: {reset_url}'
+        from_email = 'talk.team.challenge@gmail.com'
+        to_email = email
+        send_mail('Password Reset', message, from_email, [to_email])
+
+        return Response({"message": "Password reset email has been sent. Check your email to reset your password."},
+                        status=status.HTTP_200_OK)
+
+
+class PasswordResetConfirmAPIView(APIView):
+    def post(self, request):
+        token = request.data.get('token')
+        new_password = request.data.get('new_password')
+
+        # Find the reset token in the database
+        try:
+            reset_token = ResetPasswordToken.objects.get(key=token)
+        except ResetPasswordToken.DoesNotExist:
+            return Response({"message": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if reset_token.is_expired():
+            return Response({"message": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = reset_token.user
+        user.set_password(new_password)
+        user.save()
+
+        # Optional: Invalidate the used reset token
+        reset_token.delete()
+
+        return Response({"message": "Password has been reset successfully."}, status=status.HTTP_200_OK)

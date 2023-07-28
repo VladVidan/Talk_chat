@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'talk_core.apps.TalkCoreConfig',
     'rest_framework_simplejwt',
     'rest_framework.authtoken',
+    'django_rest_passwordreset'
 ]
 
 MIDDLEWARE = [
