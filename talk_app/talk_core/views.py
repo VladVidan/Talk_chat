@@ -7,6 +7,7 @@ from django.core.mail import send_mail
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import EmailLoginSerializer
+from django.shortcuts import redirect
 
 
 class UserRegistrationAPIView(APIView):
@@ -21,7 +22,7 @@ class UserRegistrationAPIView(APIView):
 
         """Send an account confirmation email"""
         subject = 'Account Confirmation'
-        message = f'To confirm your account, follow this link: http://127.0.0.1:8000/confirm/{user.id}/'
+        message = f'To confirm your account, follow this link: http://talk.pythonanywhere.com/confirm/{user.id}/'
         from_email = 'talk.team.challenge@gmail.com'
         to_email = email
         send_mail(subject, message, from_email, [to_email])
@@ -32,19 +33,19 @@ class UserRegistrationAPIView(APIView):
 
 @api_view(['GET'])
 def confirm_account(request, user_id):
-    """Email confirmation function."""
-    _user = get_user_model()
+    User = get_user_model()
 
     try:
-        user = _user.objects.get(pk=user_id)
+        user = User.objects.get(pk=user_id)
         if not user.is_active:
             user.is_active = True
             user.save()
-            return Response({"message": "Account successfully confirmed."}, status=status.HTTP_200_OK)
+
+            return redirect('https://valerka4052.github.io/chat-talk-front/login/')
         else:
             return Response({"message": "The account has already been confirmed previously."},
                             status=status.HTTP_400_BAD_REQUEST)
-    except _user.DoesNotExist:
+    except User.DoesNotExist:
         return Response({"message": "Account not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
@@ -64,8 +65,8 @@ class EmailLoginAPIView(APIView):
                 return Response({
                     'refresh': str(refresh),
                     'access': str(refresh.access_token),
+                    'email': str (email)
                 })
             else:
-                return Response({'error': 'The email or password is incorrect. Please try again.'},
-                                status=status.HTTP_401_UNAUTHORIZED)
+                return Response({'error': 'Неверные учетные данные'}, status=status.HTTP_401_UNAUTHORIZED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
