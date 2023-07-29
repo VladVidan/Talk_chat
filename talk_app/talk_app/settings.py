@@ -40,9 +40,12 @@ INSTALLED_APPS = [
     'talk_core.apps.TalkCoreConfig',
     'rest_framework_simplejwt',
     'rest_framework.authtoken',
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -175,3 +178,5 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'talk.team.challenge@gmail.com'
 EMAIL_HOST_PASSWORD = 'yxwhibkhvygczzwc'
+
+CORS_ALLOW_ALL_ORIGINS: True

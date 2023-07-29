@@ -65,7 +65,7 @@ class EmailLoginAPIView(APIView):
                 return Response({
                     'refresh': str(refresh),
                     'access': str(refresh.access_token),
-                    'email': str (email)
+                    'username': str(user.username)
                 })
             else:
                 return Response({'error': 'Неверные учетные данные'}, status=status.HTTP_401_UNAUTHORIZED)
