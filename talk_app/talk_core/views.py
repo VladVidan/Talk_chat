@@ -110,7 +110,7 @@ class PasswordResetConfirmAPIView(APIView):
             reset_token = CustomResetPasswordToken.objects.get(key=token)
 
 
-        except ResetPasswordToken.DoesNotExist:
+        except  CustomResetPasswordToken.DoesNotExist:
             return Response({"message": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
 
         if reset_token.is_expired():
