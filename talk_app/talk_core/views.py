@@ -11,6 +11,7 @@ from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenViewBase, TokenRefreshView
 
+from .models import CustomResetPasswordToken
 from .serializers import EmailLoginSerializer
 from django.shortcuts import redirect
 
@@ -88,7 +89,7 @@ class PasswordResetAPIView(APIView):
         except get_user_model().DoesNotExist:
             return Response({"message": "User with this email does not exist."}, status=status.HTTP_404_NOT_FOUND)
 
-        reset_token = ResetPasswordToken.objects.create(user=user)
+        reset_token = CustomResetPasswordToken.objects.create(user=user)
 
         reset_url = 'https://valerka4052.github.io/chat-talk-front/recover-password/?token=' + reset_token.key
         message = f'To reset your password, follow this link: {reset_url}'
@@ -106,7 +107,7 @@ class PasswordResetConfirmAPIView(APIView):
         new_password = request.data.get('new_password')
 
         try:
-            reset_token = ResetPasswordToken.objects.get(key=token)
+            reset_token = CustomResetPasswordToken.objects.get(key=token)
 
 
         except ResetPasswordToken.DoesNotExist:
