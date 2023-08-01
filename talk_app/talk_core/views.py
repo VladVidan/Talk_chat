@@ -29,7 +29,7 @@ class UserRegistrationAPIView(APIView):
 
         """Send an account confirmation email"""
         subject = 'Account Confirmation'
-        message = f'To confirm your account, follow this link: http://talk.pythonanywhere.com/confirm/{user.id}/'
+        message = f'To confirm your account, follow this link: http://talk.pythonanywhere.com/api/v1/confirm/{user.id}/'
         from_email = 'talk.team.challenge@gmail.com'
         to_email = email
         send_mail(subject, message, from_email, [to_email])
