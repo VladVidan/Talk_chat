@@ -1,19 +1,16 @@
-from typing import Generic
-
 from django.contrib.auth import get_user_model
-from django_rest_passwordreset.models import ResetPasswordToken
+from django.shortcuts import redirect
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.core.mail import send_mail
+from django_rest_passwordreset.models import ResetPasswordToken
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenViewBase, TokenRefreshView
-
-from .models import CustomResetPasswordToken
 from .serializers import EmailLoginSerializer
-from django.shortcuts import redirect
+from datetime import timedelta
+from django.utils import timezone
 
 
 class UserRegistrationAPIView(APIView):
@@ -21,15 +18,14 @@ class UserRegistrationAPIView(APIView):
 
     def post(self, request):
         """"Processing registration form data and creating a new user"""
-
         username = request.data.get('email')
         email = request.data.get('email')
         password = request.data.get('password')
-        user = User.objects.create_user(username=username, email=email, password=password, is_active=False)
+        user = User.objects.create_user(username=email, email=email, password=password, is_active=False)
 
         """Send an account confirmation email"""
         subject = 'Account Confirmation'
-        message = f'To confirm your account, follow this link: http://talk.pythonanywhere.com/api/v1/confirm/{user.id}/'
+        message = f'To confirm your account, follow this link: https://talk.pythonanywhere.com/api/v1/confirm/{user.id}/'
         from_email = 'talk.team.challenge@gmail.com'
         to_email = email
         send_mail(subject, message, from_email, [to_email])
@@ -39,7 +35,7 @@ class UserRegistrationAPIView(APIView):
 
 
 @api_view(['GET'])
-def confirm_account(request, user_id):
+def confirm_account(user_id):
     User = get_user_model()
 
     try:
@@ -76,11 +72,37 @@ class EmailLoginAPIView(APIView):
                     'username': str(user.username)
                 })
             else:
-                return Response({'error': 'Неверные учетные данные'}, status=status.HTTP_401_UNAUTHORIZED)
+                return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+def is_expired_decorator(cls):
+    """
+        Decorator to add an 'is_expired' method to the class.
+
+        This method checks if the token is expired based on its creation time.
+
+    """
+    def is_expired(self):
+        expiration_time = self.created_at + timedelta(hours=1)
+        return timezone.now() > expiration_time
+
+    cls.is_expired = is_expired
+    return cls
+
+
+ResetPasswordToken = is_expired_decorator(ResetPasswordToken)
+
+
 class PasswordResetAPIView(APIView):
+    """
+       API view to handle the password reset request.
+
+       This view sends a password reset email to the user's email address
+       with a link containing a reset token.
+
+   """
+
     def post(self, request):
         email = request.data.get('email')
 
@@ -89,7 +111,7 @@ class PasswordResetAPIView(APIView):
         except get_user_model().DoesNotExist:
             return Response({"message": "User with this email does not exist."}, status=status.HTTP_404_NOT_FOUND)
 
-        reset_token = CustomResetPasswordToken.objects.create(user=user)
+        reset_token = ResetPasswordToken.objects.create(user=user)
 
         reset_url = 'https://valerka4052.github.io/chat-talk-front/recover-password/?token=' + reset_token.key
         message = f'To reset your password, follow this link: {reset_url}'
@@ -102,15 +124,22 @@ class PasswordResetAPIView(APIView):
 
 
 class PasswordResetConfirmAPIView(APIView):
+    """
+        API view to handle the password reset confirmation.
+
+        This view confirms the password reset by validating the reset token,
+        updating the user's password, and deleting the used token.
+
+    """
+
     def post(self, request):
         token = request.data.get('token')
         new_password = request.data.get('new_password')
 
         try:
-            reset_token = CustomResetPasswordToken.objects.get(key=token)
+            reset_token = ResetPasswordToken.objects.get(key=token)
 
-
-        except  CustomResetPasswordToken.DoesNotExist:
+        except ResetPasswordToken.DoesNotExist:
             return Response({"message": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
 
         if reset_token.is_expired():
@@ -123,5 +152,3 @@ class PasswordResetConfirmAPIView(APIView):
         reset_token.delete()
 
         return Response({"message": "Password has been reset successfully."}, status=status.HTTP_200_OK)
-
-
