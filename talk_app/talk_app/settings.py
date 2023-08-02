@@ -180,3 +180,5 @@ EMAIL_HOST_USER = 'talk.team.challenge@gmail.com'
 EMAIL_HOST_PASSWORD = 'yxwhibkhvygczzwc'
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+API_HOST = "https://talk.pythonanywhere.com"
