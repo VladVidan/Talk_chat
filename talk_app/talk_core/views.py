@@ -17,18 +17,21 @@ class UserRegistrationAPIView(APIView):
     """Registration class"""
 
     def post(self, request):
-        """"Processing registration form data and creating a new user"""
-        email = request.query_params.get('email')
-        password = request.query_params.get('password')
-        serializer = EmailLoginSerializer(data={'email': email, 'password': password})
+        """Processing registration form data and creating a new user"""
+        serializer = EmailLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+        password = serializer.validated_data['password']
+
+
         user = User.objects.create_user(username=email, email=email, password=password, is_active=False)
+
+        """Send an account confirmation email"""
         send_account_confirmation_email(email, user.id)
 
         return Response({"user": serializer.data,
                          "message": "Registration was successful. Check your email to confirm your account."},
                         status=status.HTTP_201_CREATED)
-
 
 @api_view(['GET'])
 def confirm_account(request, user_id):
