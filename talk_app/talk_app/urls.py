@@ -21,6 +21,8 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from talk_core.views import EmailLoginAPIView, UserRegistrationAPIView, confirm_account, PasswordResetAPIView, \
     PasswordResetConfirmAPIView
 
+
+
 urlpatterns = [
     path('api/v1/admin/', admin.site.urls),
     path('api/v1/login/', EmailLoginAPIView.as_view(), name='email-login'),
