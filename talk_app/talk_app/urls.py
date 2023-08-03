@@ -17,11 +17,10 @@ Including another URLconf
 from django.contrib import admin
 from django.contrib.auth.views import LogoutView
 from django.urls import path
+from talk_app.yasg import urlpatterns as doc_urls
 from rest_framework_simplejwt.views import TokenRefreshView
 from talk_core.views import EmailLoginAPIView, UserRegistrationAPIView, confirm_account, PasswordResetAPIView, \
     PasswordResetConfirmAPIView
-
-
 
 urlpatterns = [
     path('api/v1/admin/', admin.site.urls),
@@ -33,3 +32,5 @@ urlpatterns = [
     path('api/v1/password_reset/', PasswordResetAPIView.as_view(), name='password-reset'),
     path('api/v1/password_reset_confirm/', PasswordResetConfirmAPIView.as_view(), name='password-reset-confirm'),
 ]
+
+urlpatterns += doc_urls

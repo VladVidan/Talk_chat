@@ -40,7 +40,7 @@ def confirm_account(request, user_id):
     try:
         user = User.objects.get(pk=user_id)
         if not user.is_active:
-            user.is_active = True
+            user.is_active = Trueзш
             user.save()
 
             return redirect('https://valerka4052.github.io/chat-talk-front/login/')
