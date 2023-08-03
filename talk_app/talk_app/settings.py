@@ -41,7 +41,9 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework.authtoken',
     "corsheaders",
-    'django_rest_passwordreset'
+    'django_rest_passwordreset',
+    'drf_yasg',
+
 ]
 
 MIDDLEWARE = [
@@ -182,3 +184,4 @@ EMAIL_HOST_PASSWORD = 'yxwhibkhvygczzwc'
 CORS_ALLOW_ALL_ORIGINS = True
 
 API_HOST = "https://talk.pythonanywhere.com"
+
