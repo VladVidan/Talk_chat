@@ -20,7 +20,7 @@ from django.urls import path
 from talk_app.yasg import urlpatterns as doc_urls
 from rest_framework_simplejwt.views import TokenRefreshView
 from talk_core.views import EmailLoginAPIView, UserRegistrationAPIView, confirm_account, PasswordResetAPIView, \
-    PasswordResetConfirmAPIView
+    PasswordResetConfirmAPIView, RefreshUser
 
 urlpatterns = [
     path('api/v1/admin/', admin.site.urls),
@@ -31,6 +31,7 @@ urlpatterns = [
     path('api/v1/confirm/<int:user_id>/', confirm_account, name='confirm-account'),
     path('api/v1/password_reset/', PasswordResetAPIView.as_view(), name='password-reset'),
     path('api/v1/password_reset_confirm/', PasswordResetConfirmAPIView.as_view(), name='password-reset-confirm'),
+    path('api/v1/refresh_user/', RefreshUser.as_view(), name='refresh-user')
 ]
 
 urlpatterns += doc_urls

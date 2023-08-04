@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import redirect
-from django.urls import reverse
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -8,9 +7,11 @@ from rest_framework import status
 from django.core.mail import send_mail
 from django_rest_passwordreset.models import ResetPasswordToken
 from django.contrib.auth.models import User
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 from .serializers import EmailLoginSerializer
 from .utils import send_account_confirmation_email, is_expired_decorator
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.exceptions import AuthenticationFailed
 
 
 class UserRegistrationAPIView(APIView):
@@ -23,7 +24,6 @@ class UserRegistrationAPIView(APIView):
         email = serializer.validated_data['email']
         password = serializer.validated_data['password']
 
-
         user = User.objects.create_user(username=email, email=email, password=password, is_active=False)
 
         """Send an account confirmation email"""
@@ -33,6 +33,7 @@ class UserRegistrationAPIView(APIView):
                          "message": "Registration was successful. Check your email to confirm your account."},
                         status=status.HTTP_201_CREATED)
 
+
 @api_view(['GET'])
 def confirm_account(request, user_id):
     User = get_user_model()
@@ -40,7 +41,7 @@ def confirm_account(request, user_id):
     try:
         user = User.objects.get(pk=user_id)
         if not user.is_active:
-            user.is_active = Trueзш
+            user.is_active = True
             user.save()
 
             return redirect('https://valerka4052.github.io/chat-talk-front/login/')
@@ -49,7 +50,6 @@ def confirm_account(request, user_id):
                             status=status.HTTP_400_BAD_REQUEST)
     except User.DoesNotExist:
         return Response({"message": "Account not found."}, status=status.HTTP_404_NOT_FOUND)
-
 
 
 class EmailLoginAPIView(APIView):
@@ -74,6 +74,29 @@ class EmailLoginAPIView(APIView):
             else:
                 return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
+
+class RefreshUser(APIView):
+
+    """ For reset page """
+    def post(self, request):
+        refresh_token = request.data.get('refresh')
+
+        if not refresh_token:
+            return Response({'error': 'Refresh token is required.'}, status=400)
+
+        try:
+            refresh_token = RefreshToken(refresh_token)
+            user_id = refresh_token['user_id']
+            user = User.objects.get(pk=user_id)
+            return Response({'email': user.email})
+        except TokenError as e:
+            raise AuthenticationFailed('Invalid refresh token.', code='invalid_refresh_token')
 
 
 class PasswordResetAPIView(APIView):
