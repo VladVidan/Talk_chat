@@ -82,6 +82,8 @@ class EmailLoginAPIView(APIView):
 
 
 class RefreshUser(APIView):
+
+    """ For reset page """
     def post(self, request):
         refresh_token = request.data.get('refresh')
 
