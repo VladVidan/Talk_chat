@@ -4,7 +4,6 @@ from django.shortcuts import redirect
 from django_rest_passwordreset.models import ResetPasswordToken
 from django.core.mail import send_mail
 from django.utils import timezone
-
 from talk_app import settings
 
 
