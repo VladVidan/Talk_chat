@@ -8,7 +8,7 @@ from django.core.mail import send_mail
 from django_rest_passwordreset.models import ResetPasswordToken
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.exceptions import TokenError
-from .serializers import EmailLoginSerializer
+from .serializers import EmailLoginSerializer, UsernameRegisterSerializer
 from .utils import send_account_confirmation_email, is_expired_decorator
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.exceptions import AuthenticationFailed
@@ -19,12 +19,13 @@ class UserRegistrationAPIView(APIView):
 
     def post(self, request):
         """Processing registration form data and creating a new user"""
-        serializer = EmailLoginSerializer(data=request.data)
+        serializer = UsernameRegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        username = serializer.validated_data['username']
         email = serializer.validated_data['email']
         password = serializer.validated_data['password']
 
-        user = User.objects.create_user(username=email, email=email, password=password, is_active=False)
+        user = User.objects.create_user(username=username, email=email, password=password, is_active=False)
 
         """Send an account confirmation email"""
         send_account_confirmation_email(email, user.id)
@@ -76,14 +77,9 @@ class EmailLoginAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-
-
-
-
 class RefreshUser(APIView):
-
     """ For reset page """
+
     def post(self, request):
         refresh_token = request.data.get('refresh')
 
@@ -94,8 +90,8 @@ class RefreshUser(APIView):
             refresh_token = RefreshToken(refresh_token)
             user_id = refresh_token['user_id']
             user = User.objects.get(pk=user_id)
-            return Response({'email': user.email})
-        except TokenError as e:
+            return Response({'username': user.username})
+        except TokenError:
             raise AuthenticationFailed('Invalid refresh token.', code='invalid_refresh_token')
 
 

@@ -22,6 +22,8 @@ def is_expired_decorator(cls):
     return cls
 ResetPasswordToken = is_expired_decorator(ResetPasswordToken)
 
+
+
 def send_account_confirmation_email(email, user_id):
     subject = 'Account Confirmation'
     message = f'To confirm your account, follow this link: {settings.API_HOST}/api/v1/confirm/{user_id}/'
