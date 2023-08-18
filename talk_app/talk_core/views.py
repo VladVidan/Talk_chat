@@ -1,18 +1,18 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import redirect
-from django.views import generic
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.generics import UpdateAPIView
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, generics
 from django.core.mail import send_mail
 from django_rest_passwordreset.models import ResetPasswordToken
-from django.contrib.auth.models import User
+from .models import CustomUser
 from rest_framework_simplejwt.exceptions import TokenError
-from .serializers import EmailLoginSerializer, UsernameRegisterSerializer , \
-    ChangePasswordAccountSerializer, UpdateLoginSerializer
+from .serializers import EmailLoginSerializer, UsernameRegisterSerializer, \
+    ChangePasswordAccountSerializer, UpdateLoginSerializer, PhotoProfileSerializer
 from .utils import send_account_confirmation_email, is_expired_decorator
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.exceptions import AuthenticationFailed
@@ -29,7 +29,7 @@ class UserRegistrationAPIView(APIView):
         email = serializer.validated_data['email']
         password = serializer.validated_data['password']
 
-        user = User.objects.create_user(username=username, email=email, password=password, is_active=False)
+        user = CustomUser.objects.create_user(username=username, email=email, password=password, is_active=False)
 
         """Send an account confirmation email"""
         send_account_confirmation_email(email, user.id)
@@ -57,8 +57,31 @@ def confirm_account(request, user_id):
         return Response({"message": "Account not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
+# class EmailLoginAPIView(APIView):
+#     """Custom class for login with email"""
+#
+#     def post(self, request):
+#         serializer = EmailLoginSerializer(data=request.data)
+#         if serializer.is_valid():
+#             email = serializer.validated_data['email']
+#             password = serializer.validated_data['password']
+#
+#             User = get_user_model()
+#             user = User.objects.filter(email=email).first()
+#
+#             if user and user.check_password(password):
+#                 refresh = RefreshToken.for_user(user)
+#                 return Response({
+#                     'refresh': str(refresh),
+#                     'access': str(refresh.access_token),
+#                     'username': str(user.username)
+#                 })
+#             else:
+#                 return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class EmailLoginAPIView(APIView):
-    """Custom class for login with email"""
+    """Custom class for login with email """
 
     def post(self, request):
         serializer = EmailLoginSerializer(data=request.data)
@@ -71,11 +94,19 @@ class EmailLoginAPIView(APIView):
 
             if user and user.check_password(password):
                 refresh = RefreshToken.for_user(user)
-                return Response({
+                response_data = {
                     'refresh': str(refresh),
                     'access': str(refresh.access_token),
-                    'username': str(user.username)
-                })
+                    'username': str(user.username),
+                    'email': str(user.email),
+                }
+
+                if user.profile_photo:
+                    response_data['profile_photo'] = user.profile_photo.url
+                else:
+                    response_data['profile_photo'] = "Photo doesnt not found"
+
+                return Response(response_data)
             else:
                 return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -88,13 +119,20 @@ class RefreshUser(APIView):
         refresh_token = request.data.get('refresh')
 
         if not refresh_token:
-            return Response({'error': 'Refresh token is required.'}, status=400)
+            return Response({'error': 'Refresh token is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             refresh_token = RefreshToken(refresh_token)
             user_id = refresh_token['user_id']
-            user = User.objects.get(pk=user_id)
-            return Response({'username': user.username})
+            user = CustomUser.objects.get(pk=user_id)
+
+            if user.profile_photo:
+                profile_photo = user.profile_photo.url
+            else:
+                profile_photo = "Photo doesnt not found"
+
+            return Response({'username': user.username, 'email': user.email, 'profile_photo': profile_photo})
+
         except TokenError:
             raise AuthenticationFailed('Invalid refresh token.', code='invalid_refresh_token')
 
@@ -160,26 +198,97 @@ class PasswordResetConfirmAPIView(APIView):
         return Response({"message": "Password has been reset successfully."}, status=status.HTTP_201_CREATED)
 
 
-
+# class ChangePasswordView(generics.UpdateAPIView):
+#     queryset = CustomUser.objects.all()
+#     permission_classes = (IsAuthenticated,)
+#     serializer_class = ChangePasswordAccountSerializer
+#
+#     def update(self, request, *args, **kwargs):
+#         serializer = self.get_serializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#
+#         user = self.request.user
+#         old_password = serializer.validated_data.get('old_password')
+#
+#         if not user.check_password(old_password):
+#             return Response({"error": "Invalid old password."}, status=status.HTTP_400_BAD_REQUEST)
+#
+#         user.set_password(serializer.validated_data['password'])
+#         user.save()
+#
+#         return Response({"message": "Password has been changed successfully."}, status=status.HTTP_200_OK)
 
 class ChangePasswordView(generics.UpdateAPIView):
-
-    queryset = User.objects.all()
     permission_classes = (IsAuthenticated,)
     serializer_class = ChangePasswordAccountSerializer
 
-
     def update(self, request, *args, **kwargs):
-        super().update(request, *args, **kwargs)
-        return Response({"message": "Password has been changed successfully."}, status=status.HTTP_201_CREATED)
+        serializer = self.get_serializer(instance=self.request.user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        old_password = serializer.validated_data.get('old_password')
+
+        if not self.request.user.check_password(old_password):
+            return Response({"error": "Invalid old password."}, status=status.HTTP_400_BAD_REQUEST)
+
+        self.request.user.set_password(serializer.validated_data['password'])
+        self.request.user.save()
+
+        return Response({"message": "Password has been changed successfully."}, status=status.HTTP_200_OK)
 
 
+# class UpdateProfilePhotoView(APIView):
+#     parser_classes = [MultiPartParser, FormParser]
+#     permission_classes = [IsAuthenticated]
+#
+#     def put(self, request, *args, **kwargs):
+#         user_profile = CustomUser.objects.get(user=request.user)
+#         serializer = PhotoProfileSerializer(user_profile, data=request.data)
+#
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response({"message": "Profile photo has been updated successfully."}, status=200)
+#         else:
+#             return Response(serializer.errors, status=400)
+#
+#
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+# def get_profile_photo(request):
+#     user_profile = CustomUser.objects.get(user=request.user)
+#     serializer = PhotoProfileSerializer(user_profile)
+#     return Response(serializer.data)
+
+class UpdateProfilePhotoView(APIView):
+    parser_classes = [MultiPartParser, FormParser]
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, *args, **kwargs):
+        user_profile = CustomUser.objects.get(id=request.user.id)
+        serializer = PhotoProfileSerializer(user_profile, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Profile photo has been updated successfully."}, status=200)
+        else:
+            return Response(serializer.errors, status=400)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_profile_photo(request, user_id):
+    try:
+        user_profile = CustomUser.objects.get(id=user_id)
+    except CustomUser.DoesNotExist:
+        return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = PhotoProfileSerializer(user_profile)
+    return Response(serializer.data)
 
 
 class UpdateUserSettingsView(UpdateAPIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = UpdateLoginSerializer
-
 
     def get_object(self):
         return self.request.user
@@ -187,3 +296,12 @@ class UpdateUserSettingsView(UpdateAPIView):
     def update(self, request, *args, **kwargs):
         super().update(request, *args, **kwargs)
         return Response({"message": "User settings have been updated successfully."}, status=status.HTTP_201_CREATED)
+
+
+class DeleteAccountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        user = request.user
+        user.delete()
+        return Response({"message": "Account has been deleted successfully."}, status=status.HTTP_204_NO_CONTENT)

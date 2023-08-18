@@ -83,7 +83,7 @@ WSGI_APPLICATION = 'talk_app.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / 'db_1.sqlite3',
     }
 }
 
@@ -184,4 +184,6 @@ EMAIL_HOST_PASSWORD = 'yxwhibkhvygczzwc'
 CORS_ALLOW_ALL_ORIGINS = True
 
 API_HOST = "https://talk.pythonanywhere.com"
+
+AUTH_USER_MODEL = 'talk_core.CustomUser'
 

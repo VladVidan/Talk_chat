@@ -20,7 +20,8 @@ from django.urls import path
 from talk_app.yasg import urlpatterns as doc_urls
 from rest_framework_simplejwt.views import TokenRefreshView
 from talk_core.views import EmailLoginAPIView, UserRegistrationAPIView, confirm_account, PasswordResetAPIView, \
-    PasswordResetConfirmAPIView, RefreshUser, ChangePasswordView, UpdateUserSettingsView
+    PasswordResetConfirmAPIView, RefreshUser, ChangePasswordView, UpdateUserSettingsView, UpdateProfilePhotoView, \
+    get_profile_photo, DeleteAccountView
 
 urlpatterns = [
     path('api/v1/admin/', admin.site.urls),
@@ -34,6 +35,9 @@ urlpatterns = [
     path('api/v1/refresh_user/', RefreshUser.as_view(), name='refresh-user'),
     path('api/v1/change_password/<int:pk>/',  ChangePasswordView.as_view(), name='change_password'),
     path('api/v1/update_user_settings/', UpdateUserSettingsView.as_view(), name='update-user-settings'),
+    path('api/v1/update_profile_photo/', UpdateProfilePhotoView.as_view(), name='update-profile-photo'),
+    path('api/v1/get_profile_photo/<int:user_id>/', get_profile_photo, name='get-profile-photo'),
+    path('api/v1/delete_account/', DeleteAccountView.as_view(), name='delete-account')
 ]
 
 urlpatterns += doc_urls
