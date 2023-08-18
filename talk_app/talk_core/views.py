@@ -1,14 +1,18 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import redirect
+from django.views import generic
 from rest_framework.decorators import api_view
+from rest_framework.generics import UpdateAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, generics
 from django.core.mail import send_mail
 from django_rest_passwordreset.models import ResetPasswordToken
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.exceptions import TokenError
-from .serializers import EmailLoginSerializer, UsernameRegisterSerializer
+from .serializers import EmailLoginSerializer, UsernameRegisterSerializer , \
+    ChangePasswordAccountSerializer, UpdateLoginSerializer
 from .utils import send_account_confirmation_email, is_expired_decorator
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.exceptions import AuthenticationFailed
@@ -153,4 +157,33 @@ class PasswordResetConfirmAPIView(APIView):
 
         reset_token.delete()
 
-        return Response({"message": "Password has been reset successfully."}, status=status.HTTP_200_OK)
+        return Response({"message": "Password has been reset successfully."}, status=status.HTTP_201_CREATED)
+
+
+
+
+class ChangePasswordView(generics.UpdateAPIView):
+
+    queryset = User.objects.all()
+    permission_classes = (IsAuthenticated,)
+    serializer_class = ChangePasswordAccountSerializer
+
+
+    def update(self, request, *args, **kwargs):
+        super().update(request, *args, **kwargs)
+        return Response({"message": "Password has been changed successfully."}, status=status.HTTP_201_CREATED)
+
+
+
+
+class UpdateUserSettingsView(UpdateAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = UpdateLoginSerializer
+
+
+    def get_object(self):
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        super().update(request, *args, **kwargs)
+        return Response({"message": "User settings have been updated successfully."}, status=status.HTTP_201_CREATED)
